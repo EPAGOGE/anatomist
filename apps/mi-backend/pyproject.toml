@@ -1,0 +1,75 @@
+[project]
+name = "mi-backend"
+version = "0.1.0"
+description = "MI Workbench backend — TransformerLens + FastAPI for visual mechanistic interpretability"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "EPAGOGE" }]
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "websockets>=12.0",
+    "msgpack>=1.0",
+    "numpy>=1.24",
+    "python-multipart>=0.0.6",
+    "httpx>=0.25",
+]
+
+[project.optional-dependencies]
+# Real ML execution — large download, install when ready to run real models.
+# transformer-lens 3.4.0+ ships TransformerBridge (the current canonical
+# loader); pre-3.0 versions only had HookedTransformer.from_pretrained.
+ml = [
+    "torch>=2.1",
+    "transformer-lens>=3.4",
+    "transformers>=4.40",
+    "accelerate>=0.30",
+]
+
+# Gemma Scope SAE browsing (Subsystem 3 V2).
+# Note: Gemma Scope SAEs require HookedSAETransformer.from_pretrained_no_processing
+# to avoid corrupting reconstructions — this is wired in routes/probe.py
+# when the SAE-feature endpoints land.
+sae = [
+    "sae-lens>=3.0",
+    "neuronpedia>=0.1",  # for human-readable SAE feature labels via NEURONPEDIA_API_KEY
+]
+
+# RunPod cloud runtime fallback (Subsystem 1 V2).
+runpod = [
+    "runpod>=1.5",
+]
+
+# Development tooling.
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "ruff>=0.1",
+    "mypy>=1.5",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["mi_backend*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+ignore = ["E501"]  # line-length handled by formatter
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+# Fast tier by default: the stub-contract suite needs NO ml deps (what CI
+# installs). Live tests (real gpt2, real probes) run with: pytest -m live
+addopts = "-m 'not live'"
+markers = ["live: exercises real model loading and real probe paths"]

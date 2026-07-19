@@ -1,0 +1,22 @@
+{
+  "name": "@epagoge/components",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Domain-agnostic component registry. Phase 0 sub-phase E ships the ML primitive set; the registry interface is shaped so cross-domain expansion (Phase 3) lands without rewriting the spec model.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tensor": "./src/tensor/index.ts",
+    "./registry": "./src/registry/index.ts",
+    "./domains/ml": "./src/domains/ml/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@epagoge/shared": "^0.0.0",
+    "zod": "^4.4.3"
+  }
+}

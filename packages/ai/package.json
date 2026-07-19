@@ -1,0 +1,25 @@
+{
+  "name": "@epagoge/ai",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Anthropic SDK wrapper, model routing, prompt caching",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.97.1",
+    "@epagoge/crypto": "^0.0.0",
+    "@epagoge/ledger": "^0.0.0",
+    "@epagoge/shared": "^0.0.0",
+    "pg": "^8.21.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.20.0"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": false,
+    "exactOptionalPropertyTypes": false,
+
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
+
+    "skipLibCheck": true,
+    "useDefineForClassFields": true,
+
+    "paths": {
+      "@epagoge/shared": ["./packages/shared/src/index.ts"],
+      "@epagoge/shared/*": ["./packages/shared/src/*"],
+      "@epagoge/crypto": ["./packages/crypto/src/index.ts"],
+      "@epagoge/crypto/*": ["./packages/crypto/src/*"],
+      "@epagoge/ai": ["./packages/ai/src/index.ts"],
+      "@epagoge/ai/*": ["./packages/ai/src/*"],
+      "@epagoge/compute": ["./packages/compute/src/index.ts"],
+      "@epagoge/compute/*": ["./packages/compute/src/*"],
+      "@epagoge/ledger": ["./packages/ledger/src/index.ts"],
+      "@epagoge/ledger/schema": ["./packages/ledger/src/schema.ts"]
+    }
+  }
+}

@@ -1,0 +1,29 @@
+set -e
+
+zero=$(git hash-object --stdin </dev/null | tr '0-9a-f' '0')
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$local_sha" = "$zero" ]; then
+    continue
+  fi
+
+  if [ "$remote_sha" = "$zero" ]; then
+    range="$local_sha"
+  else
+    range="$remote_sha..$local_sha"
+  fi
+
+  unsigned=$(git rev-list "$range" | while read -r commit; do
+    if ! git verify-commit "$commit" >/dev/null 2>&1; then
+      echo "$commit"
+    fi
+  done)
+
+  if [ -n "$unsigned" ]; then
+    echo "ERROR: push aborted — the following commits on $local_ref are not signed:" >&2
+    echo "$unsigned" | sed 's/^/  /' >&2
+    echo >&2
+    echo "Sign them by running:  git commit --amend --no-edit -S" >&2
+    exit 1
+  fi
+done

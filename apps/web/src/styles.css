@@ -1,0 +1,330 @@
+/* EPAGOGE design system — Obsidian + Iridescent
+ *
+ * Palette is inspired by makemepulse-lineage creative work (Resn, Active Theory) —
+ * warm-darks not pure black, distinctive accents, a holographic iridescent gradient
+ * reserved for chain-signing and verification moments (the cryptographic-proof
+ * visual metaphor — like passport holograms).
+ *
+ * Locked: 2026-05-24 (see docs/Pitch_Prep_Sprint.md).
+ *
+ * Tailwind v4 @theme syntax — tokens here become utility classes:
+ *   bg-obsidian, text-accent, border-line, font-mono, etc.
+ */
+
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/600.css';
+@import '@fontsource/jetbrains-mono/700.css';
+
+@import 'tailwindcss';
+
+@theme {
+  /* Surfaces */
+  --color-obsidian: #0c0e14;
+  --color-panel: #13161f;
+  --color-panel-2: #191d2a;
+  --color-line: #1e2231;
+
+  /* Text */
+  --color-text: #e8ebf2;
+  --color-dim: #6b7280;
+
+  /* Accents */
+  --color-accent: #f472b6; /* fuchsia — primary, component types, active */
+  --color-accent-soft: #c084fc; /* violet — AI surfaces, links */
+  --color-accent-warm: #fb923c; /* warm orange — sparing, attention */
+
+  /* Signals */
+  --color-success: #5eead4; /* mint — verified, passed */
+  --color-warn: #fb7185; /* coral — errors, used sparingly */
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Custom properties for things Tailwind doesn't natively theme.
+ * Reference these via `var(--…)` in component styles. */
+:root {
+  /* The iridescent gradient — RESERVED for chain-signing / verification moments.
+   * Discipline: do not use as decoration. See Pitch_Prep_Sprint.md design system. */
+  --iridescent: linear-gradient(120deg, #c084fc 0%, #f472b6 50%, #fb923c 100%);
+
+  /* Hero gradient for background of premium surfaces (landing, canvas backdrop). */
+  --bg-grad: linear-gradient(180deg, #13161f 0%, #0c0e14 100%);
+
+  /* Glass surface overlays — used for floating panels (AI card, popovers). */
+  --glass-bg: rgba(19, 22, 31, 0.72);
+  --glass-border: rgba(244, 114, 182, 0.12);
+}
+
+/* Base reset + body */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--color-obsidian);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-feature-settings:
+    'cv02' on,
+    'cv03' on,
+    'cv04' on,
+    'cv11' on;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+}
+
+/* Numeric data + code stays mono. Use class `font-mono` from Tailwind. */
+code,
+kbd,
+pre,
+samp,
+.font-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* === Utility classes ============================================== */
+
+/* Iridescent gradient text — for hero headings inside chain-signed contexts.
+ * Discipline: use sparingly. The scarcity is the point. */
+.text-iridescent {
+  background: var(--iridescent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Iridescent gradient background — chain-signing pulse, verification badge. */
+.bg-iridescent {
+  background: var(--iridescent);
+}
+
+/* Iridescent border — selected event, just-signed state. */
+.border-iridescent {
+  border-image: var(--iridescent) 1;
+}
+
+/* Glass panel — overlays, floating cards (AI validation, popovers). */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid var(--glass-border);
+}
+
+/* Subtle hairline border that picks up the obsidian aesthetic. */
+.hairline {
+  border-color: var(--color-line);
+}
+
+/* Sign pulse — fires once when a chain event lands. Iridescent flash. */
+@keyframes sign-pulse {
+  0% {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.96);
+    filter: blur(4px);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0) scale(1.02);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+.sign-pulse {
+  animation: sign-pulse 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Focus ring — accessible + on-brand. */
+*:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Selection color — uses the accent so highlights feel cohesive. */
+::selection {
+  background: rgba(244, 114, 182, 0.28);
+  color: var(--color-text);
+}
+
+/* Canvas grid background — subtle dot grid for the Rete editor area.
+ * Sets ambient texture so the canvas reads as a workspace, not a void.
+ * Two-layer: faint dot grid + radial vignette toward the center. */
+.canvas-grid {
+  background-color: var(--color-obsidian);
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(244, 114, 182, 0.04) 0%, transparent 70%),
+    radial-gradient(circle at 1px 1px, rgba(232, 235, 242, 0.06) 1px, transparent 0);
+  background-size:
+    100% 100%,
+    24px 24px;
+  transition: box-shadow 0.2s ease-out;
+}
+
+/* Drop-zone-active state — fires while a palette item is being dragged
+ * over the canvas. Inset accent glow signals "this is a valid drop zone."
+ * Toggled by CanvasView on dragenter/dragleave/drop. */
+.canvas-grid.drop-active {
+  box-shadow:
+    inset 0 0 0 2px rgba(244, 114, 182, 0.5),
+    inset 0 0 60px rgba(244, 114, 182, 0.1);
+}
+
+/* Save-flash — fires once when an architecture save lands. Mint flash on
+ * the canvas border to acknowledge the chain event. CanvasPage adds the
+ * class for ~700ms on save success. */
+@keyframes save-flash-anim {
+  0% {
+    box-shadow:
+      inset 0 0 0 2px rgba(94, 234, 212, 0),
+      inset 0 0 60px rgba(94, 234, 212, 0);
+  }
+  30% {
+    box-shadow:
+      inset 0 0 0 2px rgba(94, 234, 212, 0.7),
+      inset 0 0 80px rgba(94, 234, 212, 0.15);
+  }
+  100% {
+    box-shadow:
+      inset 0 0 0 2px rgba(94, 234, 212, 0),
+      inset 0 0 60px rgba(94, 234, 212, 0);
+  }
+}
+.canvas-grid.save-flash {
+  animation: save-flash-anim 0.7s ease-out;
+}
+
+/* Rete node restyle — best-effort CSS overrides on rete-react-plugin's
+ * classic preset. The default preset uses inline styles so high
+ * specificity + !important are required. Custom React preset
+ * customization is the "correct" approach and is deferred. */
+.canvas-grid .node {
+  background: var(--color-panel) !important;
+  border: 1px solid var(--color-line) !important;
+  border-radius: 8px !important;
+  color: var(--color-text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 12px !important;
+  /* Strong shadow underneath so nodes don't disappear into the dark
+   * grid background — Day 10 user feedback: "Objects are too free-draw
+   * and sometimes disappear into the background or get lost." */
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.55),
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.canvas-grid .node:hover {
+  border-color: rgba(244, 114, 182, 0.4) !important;
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px rgba(244, 114, 182, 0.1);
+}
+
+.canvas-grid .node.selected {
+  border-color: var(--color-accent) !important;
+  box-shadow:
+    0 0 0 1px var(--color-accent),
+    0 8px 28px rgba(244, 114, 182, 0.18);
+}
+
+.canvas-grid .node .title {
+  color: var(--color-text) !important;
+  font-weight: 600 !important;
+  padding: 8px 12px !important;
+  border-bottom: 1px solid var(--color-line) !important;
+  background: var(--color-panel-2) !important;
+  border-radius: 7px 7px 0 0 !important;
+}
+
+.canvas-grid .socket {
+  background: var(--color-panel-2) !important;
+  border: 1.5px solid var(--color-dim) !important;
+  transition: all 0.15s !important;
+}
+
+.canvas-grid .socket:hover {
+  border-color: var(--color-accent) !important;
+  background: rgba(244, 114, 182, 0.15) !important;
+  transform: scale(1.15);
+}
+
+.canvas-grid .connection .main-path {
+  stroke: var(--color-accent-soft) !important;
+  stroke-width: 2px !important;
+  filter: drop-shadow(0 0 4px rgba(192, 132, 252, 0.4));
+}
+
+.canvas-grid .connection.pending .main-path {
+  stroke-dasharray: 4 4;
+  opacity: 0.7;
+}
+
+/* Scrollbars — match the aesthetic instead of OS-default. */
+* {
+  scrollbar-color: var(--color-line) transparent;
+  scrollbar-width: thin;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #2a3145;
+}
+
+/* Product wordmark — Rubik Puddles (OFL, bundled in public/fonts). The single
+ * swap point referenced by the .wordmark class on the landing hero and nav. */
+@font-face {
+  font-family: 'Rubik Puddles';
+  src: url('/fonts/RubikPuddles-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+.wordmark {
+  font-family: 'Rubik Puddles', var(--font-sans);
+  font-weight: 400;
+  letter-spacing: 0;
+  /* Fill + white shading against black. Swap --wordmark-fill to compare colors
+   * (orange now; fuchsia = #f472b6). The white stroke keeps the luminous
+   * white-on-black edge the puddle face has. */
+  --wordmark-fill: #f472b6;
+  color: var(--wordmark-fill);
+  /* Fatten the fill with a same-color stroke; keep the white edge as a crisp
+   * 4-way ring behind it (text-stroke only allows one color, so the white
+   * shading rides on text-shadow). */
+  -webkit-text-stroke: 3px var(--wordmark-fill);
+  paint-order: stroke fill;
+  text-shadow:
+    1.5px 0 0 rgba(255, 255, 255, 0.92),
+    -1.5px 0 0 rgba(255, 255, 255, 0.92),
+    0 1.5px 0 rgba(255, 255, 255, 0.92),
+    0 -1.5px 0 rgba(255, 255, 255, 0.92);
+}

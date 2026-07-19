@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "jsx": "react-jsx",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"]
+  },
+  "references": [
+    { "path": "../../packages/shared" },
+    { "path": "../../packages/crypto" },
+    { "path": "../../packages/ai" }
+  ],
+  "include": ["src/**/*"]
+}

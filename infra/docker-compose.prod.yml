@@ -1,0 +1,133 @@
+# Production docker-compose for the EPAGOGE platform.
+#
+# Intended to run on a single-node setup (one VM, one bare-metal box,
+# or a managed container service that accepts docker-compose like
+# DigitalOcean App Platform, Fly.io machines, AWS Lightsail Containers).
+# For multi-node / autoscaling, this file is the spec to translate to
+# the target platform's own format (ECS task defs, Cloud Run YAML,
+# Container Apps templates).
+#
+# Usage:
+#   1. Copy infra/.env.production.example to infra/.env.production
+#      and fill in secrets.
+#   2. Build images:    docker compose -f infra/docker-compose.prod.yml build
+#   3. Run migrations:  docker compose -f infra/docker-compose.prod.yml run --rm migrate
+#   4. Start services:  docker compose -f infra/docker-compose.prod.yml up -d
+#   5. Verify healthy:  curl http://localhost:8080/health/ready
+#
+# Postgres + Redis are included for self-hosted single-node deploys.
+# When using managed services (RDS, Cloud SQL, ElastiCache, etc.), the
+# postgres + redis services here are unused — point DATABASE_URL +
+# REDIS_URL at the managed endpoints and don't `up` those services.
+#
+# Secrets discipline: NO secrets in this file. Every secret comes from
+# the env_file or the orchestrator's secret store. The .env.production
+# file is .gitignored.
+
+name: epagoge-prod
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-epagoge}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      POSTGRES_DB: ${POSTGRES_DB:-epagoge}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-epagoge} -d ${POSTGRES_DB:-epagoge}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    # No host port mapping in production — only the api reaches Postgres,
+    # via the internal docker network. Remove this comment line and add
+    # `ports: ['5432:5432']` ONLY for emergency debugging, never for prod.
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  migrate:
+    # One-shot migration runner. Invoke with:
+    #   docker compose -f infra/docker-compose.prod.yml run --rm migrate
+    # NOT a long-running service; `up` doesn't start it (profile: tools).
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    image: epagoge-api:latest
+    profiles: ['tools']
+    restart: 'no'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env.production
+    environment:
+      # Pin the URL to the in-network postgres in self-hosted mode.
+      # When using managed Postgres, override in .env.production and the
+      # explicit value here doesn't matter (env_file wins on later override).
+      DATABASE_URL: postgres://${POSTGRES_USER:-epagoge}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-epagoge}
+    command: ['npx', 'drizzle-kit', 'migrate']
+    working_dir: /app/apps/api
+
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    image: epagoge-api:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env.production
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+      # Same DATABASE_URL pinning as the migrate service.
+      DATABASE_URL: postgres://${POSTGRES_USER:-epagoge}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-epagoge}
+      REDIS_URL: redis://redis:6379
+    expose:
+      - '3000'
+    # API is reverse-proxied by the web service (or by an external LB);
+    # not exposed on the host directly.
+
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+      args:
+        # Build-time injection of the API URL the SPA will hit. For
+        # same-origin deploys (api behind the same hostname under /api),
+        # set this to '/api' and add an nginx proxy_pass rule. For
+        # split-origin deploys, set to the api's full URL.
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080/api}
+    image: epagoge-web:latest
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - '${WEB_PORT:-8080}:80'
+    # The single public-facing port. nginx in this container serves the
+    # SPA + (optionally, via a small config addition) proxies /api/* to
+    # the api service. For TLS, terminate at the cloud LB or add a
+    # certbot/traefik sidecar.
+
+volumes:
+  pgdata:
+  redisdata:

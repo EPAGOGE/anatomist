@@ -1,0 +1,64 @@
+{
+  "name": "epagoge-platform",
+  "version": "0.0.0",
+  "private": true,
+  "description": "EPAGOGE platform monorepo",
+  "type": "module",
+  "engines": {
+    "node": ">=24",
+    "npm": ">=11"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev": "concurrently --names api,web --prefix-colors yellow,cyan --kill-others-on-fail \"npm run dev --workspace=@epagoge/api\" \"npm run dev --workspace=@epagoge/web\"",
+    "workbench": "node scripts/workbench.mjs",
+    "dev:api": "npm run dev --workspace=@epagoge/api",
+    "dev:web": "npm run dev --workspace=@epagoge/web",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --build",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.60.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^25.9.1",
+    "@vitest/coverage-istanbul": "^4.1.6",
+    "@vitest/coverage-v8": "^4.1.6",
+    "@vitest/ui": "^4.1.6",
+    "concurrently": "^9.2.1",
+    "eslint": "^10.4.0",
+    "eslint-config-prettier": "^10.1.8",
+    "fast-check": "^4.8.0",
+    "happy-dom": "^20.9.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.5",
+    "msw": "^2.14.6",
+    "playwright": "^1.60.0",
+    "prettier": "^3.8.3",
+    "tsx": "^4.22.3",
+    "typescript": "~5.6.0",
+    "typescript-eslint": "^8.59.4",
+    "vitest": "^4.1.6"
+  }
+}

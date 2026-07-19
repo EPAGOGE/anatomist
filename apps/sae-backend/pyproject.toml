@@ -1,0 +1,48 @@
+[project]
+name = "sae-backend"
+version = "0.1.0"
+description = "SAE sidecar — sae_lens in its own environment, isolated from the MI backend's TransformerLens"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "EPAGOGE" }]
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "httpx>=0.25",
+]
+
+[project.optional-dependencies]
+# The whole point of this sidecar: sae_lens with WHATEVER TransformerLens /
+# torch versions it pins, in a venv the mi-backend never imports from. The
+# two services share nothing but HTTP.
+ml = [
+    "sae-lens>=5.0",
+]
+
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.1",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["sae_backend*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-m 'not live'"
+markers = ["live: exercises real sae_lens model + SAE loading"]

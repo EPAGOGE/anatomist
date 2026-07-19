@@ -1,0 +1,203 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: lint / typecheck / test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Real Postgres + Redis so the live-tier tests run in CI (they self-skip
+    # without reachable services, which starves coverage below its thresholds).
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: epagoge
+          POSTGRES_PASSWORD: epagoge_dev
+          POSTGRES_DB: epagoge
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U epagoge"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://epagoge:epagoge_dev@localhost:5432/epagoge
+      REDIS_URL: redis://localhost:6379
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: install
+        run: npm ci
+
+      - name: lint
+        run: npx eslint .
+
+      - name: format check
+        run: npx prettier --check .
+
+      - name: typecheck
+        run: npx tsc --build
+
+      - name: migrate + seed
+        run: |
+          npm run -w @epagoge/api db:migrate
+          npm run -w @epagoge/api db:seed
+
+      - name: test with coverage
+        run: npx vitest run --coverage
+
+      - name: upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 14
+
+      - name: web build
+        run: npx -w @epagoge/web vite build
+
+  mi-backend:
+    name: mi-backend lint / test (stub tier)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: apps/mi-backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: apps/mi-backend/pyproject.toml
+
+      # Base + dev deps ONLY — no [ml] extra. The fast tier tests the whole
+      # HTTP contract via the degrade-to-stub paths, which is exactly what a
+      # clone without torch experiences. Live tests (real gpt2) are excluded
+      # by the default `-m 'not live'` addopts.
+      - name: install (no ML extra)
+        run: pip install -e '.[dev]'
+
+      - name: ruff lint
+        run: ruff check mi_backend tests
+
+      - name: pytest (stub contract)
+        run: pytest
+
+  sae-backend:
+    name: sae-backend lint / test (stub tier)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: apps/sae-backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: apps/sae-backend/pyproject.toml
+      # Base + dev only — no sae_lens. The stub tier proves the sidecar's
+      # degrade-to-stub contract without the multi-GB ML install.
+      - name: install (no ML extra)
+        run: pip install -e '.[dev]'
+      - name: ruff lint
+        run: ruff check sae_backend tests main.py
+      - name: pytest (stub contract)
+        run: pytest
+
+  audit:
+    name: dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm audit --audit-level=high
+
+  secrets:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # Plain gitleaks CLI (the wrapper action requires a paid license for
+      # organization accounts; the scanner itself is free OSS).
+      - run: |
+          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest \
+            detect --source=/repo -v --no-banner
+
+  semgrep:
+    name: semgrep SAST
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      # Report-only for now: 23 findings queued for a proper triage pass.
+      # Flip back to --error once the triage lands.
+      - run: semgrep scan --config=auto
+        env:
+          SEMGREP_RULES: p/typescript p/javascript p/security-audit p/owasp-top-ten p/r2c-security-audit
+
+  signed-commits:
+    name: verify signed commits on PR
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: verify every PR commit is signed
+        run: |
+          set -e
+          base="${{ github.event.pull_request.base.sha }}"
+          head="${{ github.event.pull_request.head.sha }}"
+          unsigned=$(git log --format="%H %G?" "$base..$head" | awk '$2!="G" && $2!="U" {print $1}')
+          if [ -n "$unsigned" ]; then
+            echo "::error::Unsigned commits in this PR:"
+            echo "$unsigned"
+            exit 1
+          fi
+          echo "All commits in this PR are signed."

@@ -1,0 +1,9 @@
+# Gitleaks config. Extends the default rules; allowlists the documented
+# placeholder values in .env.example (they are instructions, not secrets).
+[extend]
+useDefault = true
+
+[allowlist]
+description = "env-example placeholders"
+regexes = ['''replace-with-64-char-hex''']
+paths = ['''\.env\.example$''']

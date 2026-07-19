@@ -1,0 +1,49 @@
+{
+  "name": "@epagoge/api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "EPAGOGE Fastify backend",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc --build",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "infra:check": "tsx scripts/infra-check.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx scripts/seed-local-user.ts",
+    "chain:backfill-reasoning": "tsx scripts/seed-reasoning-chain.ts",
+    "doctor": "tsx scripts/doctor.ts",
+    "verify:codegen": "tsx scripts/verify-generated-code/index.ts",
+    "measure:routing-cost": "tsx scripts/measure-routing-cost/index.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1050.0",
+    "@epagoge/ai": "^0.0.0",
+    "@epagoge/compute": "^0.0.0",
+    "@epagoge/crypto": "^0.0.0",
+    "@epagoge/ledger": "^0.0.0",
+    "@epagoge/shared": "^0.0.0",
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/cors": "^11.2.0",
+    "@fastify/helmet": "^13.0.2",
+    "@fastify/jwt": "^10.1.0",
+    "@fastify/rate-limit": "^10.3.0",
+    "argon2": "^0.44.0",
+    "bullmq": "^5.76.10",
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
+    "fastify": "^5.8.5",
+    "ioredis": "^5.10.1",
+    "pg": "^8.21.0",
+    "pusher": "^5.3.3",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.20.0",
+    "drizzle-kit": "^0.31.10"
+  }
+}

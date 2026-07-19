@@ -1,0 +1,1 @@
+ALTER TABLE "events" ADD COLUMN "payload_inline_cbor" "bytea";

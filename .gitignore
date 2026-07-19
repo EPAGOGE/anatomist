@@ -1,0 +1,78 @@
+# ---- Dependencies ----
+node_modules/
+.pnp
+.pnp.js
+.yarn/cache
+.yarn/install-state.gz
+
+# Python virtual environments (e.g. the verification harness's torch venv).
+# Per ADR-0038: torch is installed locally per-developer; the venv is not
+# part of the repo.
+.torch-venv/
+.venv/
+venv/
+
+# ---- Builds & caches ----
+dist/
+build/
+out/
+.next/
+.turbo/
+.cache/
+.parcel-cache/
+.vite/
+coverage/
+*.tsbuildinfo
+.eslintcache
+
+# ---- Environment / secrets ----
+.env
+.env.*
+!.env.example
+!.env.production.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.gpg
+*_rsa
+*_ed25519
+secrets/
+
+# ---- Logs ----
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---- OS / editor ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+
+# ---- Testing ----
+playwright-report/
+test-results/
+.vitest-cache/
+
+# ---- Local infra ----
+docker-data/
+pgdata/
+redisdata/
+
+# ---- Misc ----
+.tmp/
+tmp/
+
+# Local hybrid signing keys for dev (NEVER commit; see SECURITY)
+.local-keys/
+
+# Local content-addressed blob store (Phase 0 dev; gitignored)
+.local-blobs/
